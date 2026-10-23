@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phần mềm tạo Báo cáo Cung ứng Dịch vụ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+        
+        body {
+            background-color: #f3f4f6;
+            font-family: Arial, sans-serif;
+        }
+
+        .a4-wrapper {
+            width: 210mm;
+            height: 296.5mm;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            padding: 18mm 20mm 20mm 20mm;
+            box-sizing: border-box;
+            font-family: 'Tinos', 'Times New Roman', serif;
+            font-size: 14px;
+            color: black;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .custom-underline {
+            display: inline-block;
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 1px;
+            line-height: 1.1;
+        }
+
+        .flex-dotted {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .dotted-line {
+            flex-grow: 1;
+            border-bottom: 2px dotted #000;
+            margin: 0 5px;
+            min-width: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            height: 18px;
+        }
+
+        .cb-item {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .box {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1px solid #000;
+            margin-right: 6px;
+            font-size: 12px;
+            text-align: center;
+            line-height: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .reason-line {
+            border-bottom: 2px dotted #000;
+            width: 100%;
+            height: 24px;
+            margin-top: 8px;
+            font-size: 14px;
+            line-height: 24px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .input-error {
+            border: 2px solid #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+    
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md z-10">
+        <h1 class="text-xl font-bold">Phần mềm tạo Báo cáo Cung ứng Dịch vụ</h1>
+        <button onclick="generatePDF()" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded font-bold shadow transition text-sm">
+            Tạo PDF
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Cột trái: Giao diện Tab chuyển đổi -->
+        <div class="w-[420px] bg-white p-5 overflow-y-auto border-r border-gray-300 flex flex-col shrink-0">
+            
+            <!-- Thanh chọn Tab -->
+            <div class="flex border-b border-gray-300 mb-5">
+                <button onclick="switchTab('create')" id="tab-create" class="flex-1 py-2 text-center font-bold text-sm text-blue-600 border-b-2 border-blue-600 transition">
+                    1. Tạo Báo Cáo
+                </button>
+                <button onclick="switchTab('list')" id="tab-list" class="flex-1 py-2 text-center font-bold text-sm text-gray-500 border-b-2 border-transparent transition">
+                    2. Danh Sách & Tìm Kiếm
+                </button>
+            </div>
+
+            <!-- NỘI DUNG TAB 1: TẠO BÁO CÁO -->
+            <div id="content-create" class="flex-1">
+                <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-200 mb-5">
+                    <h2 class="text-sm font-bold mb-3 border-b pb-1.5 text-blue-700 uppercase">Thông tin chuyến bay</h2>
+                    
+                    <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Số hiệu CB <span class="text-red-500">*</span>:</label>
+                            <input type="text" id="fltNo" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white" placeholder="VD: 212">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Hành trình <span class="text-red-500">*</span>:</label>
+                            <input type="text" id="route" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">ETD/ATD:</label>
+                            <input type="text" id="etd" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">ETA/ATA:</label>
+                            <input type="text" id="eta" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Máy bay/AC <span class="text-red-500">*</span>:</label>
+                            <select id="ac" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                                <option value="">- Chọn -</option>
+                                <option value="32A">32A</option>
+                                <option value="32C">32C</option>
+                                <option value="32D">32D</option>
+                                <option value="32E">32E</option>
+                                <option value="32F">32F</option>
+                                <option value="32K">32K</option>
+                                <option value="32N">32N</option>
+                                <option value="32V">32V</option>
+                                <option value="35A">35A</option>
+                                <option value="35B">35B</option>
+                                <option value="78A">78A</option>
+                                <option value="78B">78B</option>
+                                <option value="78C">78C</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Config <span class="text-red-500">*</span>:</label>
+                            <input type="text" id="config" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Booked <span class="text-red-500">*</span>:</label>
+                            <input type="text" id="booked" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">O/B <span class="text-red-500">*</span>:</label>
+                            <input type="text" id="ob" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1">Ngày bay <span class="text-red-500">*</span>:</label>
+                        <input type="date" id="date" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 bg-white">
+                    </div>
+                </div>
+
+                <h2 class="text-sm font-bold mb-3 border-b pb-1 text-blue-600">2. LOẠI HỒ SƠ <span class="text-[10px] text-red-500">(Chọn 1)</span></h2>
+                <div class="grid grid-cols-1 gap-1.5 text-xs mb-4">
+                    <label><input type="checkbox" id="cb1" data-eng="Hotel" class="mr-1.5">Khách sạn/Hotel</label>
+                    <label><input type="checkbox" id="cb2" data-eng="Depo-Inad" class="mr-1.5">Khách bị trục xuất/Depo-Inad</label>
+                    <label><input type="checkbox" id="cb3" data-eng="Downgrade" class="mr-1.5">Hạ hạng ghế bắt buộc/Downgrade</label>
+                    <label><input type="checkbox" id="cb4" data-eng="Offload" class="mr-1.5">Khách bị từ chối vận chuyển/Offload</label>
+                    <label><input type="checkbox" id="cb5" data-eng="Taxi" class="mr-1.5">Vận chuyển mặt đất/Taxi</label>
+                    <label><input type="checkbox" id="cb6" data-eng="TQ6" class="mr-1.5">TQ 6/The 6th freedom</label>
+                    <label><input type="checkbox" id="cb7" data-eng="CabinCrewMeal" class="mr-1.5">Ăn, uống TB-TV</label>
+                    <label><input type="checkbox" id="cb8" data-eng="Accident" class="mr-1.5">Tai nạn sự cố/Accident</label>
+                    <label><input type="checkbox" id="cb9" data-eng="TWOV" class="mr-1.5">DL quá cảnh/TWOV</label>
+                    <div class="flex gap-3">
+                        <label><input type="checkbox" id="cb10_1" data-eng="Meal" class="mr-1.5">Phục vụ ăn</label>
+                        <label><input type="checkbox" id="cb10_2" data-eng="Drink" class="mr-1.5">Uống</label>
+                    </div>
+                    <label><input type="checkbox" id="cb11" data-eng="FIM" class="mr-1.5">Chuyển đổi hành trình/FIM</label>
+                    <label><input type="checkbox" id="cb12" data-eng="Luggage" class="mr-1.5">Hành lý/Luggage</label>
+                    <label><input type="checkbox" id="cb13" data-eng="Lounge" class="mr-1.5">Phục vụ phòng chờ thương gia</label>
+                    <label><input type="checkbox" id="cb14" data-eng="ServiceRecovery" class="mr-1.5">Phục hồi và đảm bảo dịch vụ</label>
+                </div>
+                <div class="flex items-center mb-5">
+                    <label class="font-bold text-xs mr-2 whitespace-nowrap"><input type="checkbox" id="cb15" data-eng="Other" class="mr-1.5">Khác:</label>
+                    <input type="text" id="otherReason" class="flex-grow px-2 py-1 text-xs border-b border-gray-400 focus:outline-none">
+                </div>
+
+                <h2 class="text-sm font-bold mb-2 border-b pb-1 text-blue-600">3. LÝ DO <span class="text-red-500">*</span></h2>
+                <textarea id="reasonText" rows="2" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500 mb-5" placeholder="Nhập lý do..."></textarea>
+
+                <h2 class="text-sm font-bold mb-3 border-b pb-1 text-blue-600 uppercase">4. XÁC NHẬN CUNG ỨNG DỊCH VỤ</h2>
+                <div class="grid grid-cols-2 gap-2.5 mb-5 text-xs">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Số khách:</label>
+                        <input type="text" id="guestNo" class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Tổng chi phí:</label>
+                        <input type="text" id="totalCost" class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none" placeholder="VD: 1,000,000">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Số/Series:</label>
+                        <input type="text" id="series" class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Số lượng xe/vouchers:</label>
+                        <input type="text" id="vouchers" class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    </div>
+                </div>
+
+                <h2 class="text-sm font-bold mb-3 border-b pb-1 text-blue-600 uppercase">5. HỒ SƠ ĐÍNH KÈM</h2>
+                <div class="grid grid-cols-2 gap-2.5 mb-6 text-xs">
+                    <input type="text" id="doc1" placeholder="1." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc5" placeholder="5." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc2" placeholder="2." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc6" placeholder="6." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc3" placeholder="3." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc7" placeholder="7." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc4" placeholder="4." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                    <input type="text" id="doc8" placeholder="8." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
+                </div>
+
+                <!-- Nút Lưu hồ sơ -->
+                <div class="mb-8">
+                    <button onclick="saveToFirebase()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold shadow transition text-sm">
+                        Lưu hồ sơ
+                    </button>
+                </div>
+            </div>
+
+            <!-- NỘI DUNG TAB 2: DANH SÁCH & TÌM KIẾM -->
+            <div id="content-list" class="flex-1 hidden">
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <h2 class="text-xs font-bold mb-2 text-blue-700 uppercase">📋 Danh sách & Tìm kiếm hồ sơ</h2>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-600 mb-0.5">Số hiệu CB:</label>
+                            <input type="text" id="searchFltNo" class="w-full px-2 py-1 text-xs border border-gray-300 rounded" placeholder="VD: VN212">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-600 mb-0.5">Ngày bay:</label>
+                            <input type="date" id="searchDate" class="w-full px-2 py-1 text-xs border border-gray-300 rounded">
+                        </div>
+                    </div>
+                    <button onclick="searchRecords()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 rounded text-xs font-bold transition mb-3">
+                        Lọc / Tìm kiếm
+                    </button>
+                    <div id="searchResults" class="max-h-96 overflow-y-auto text-xs divide-y divide-gray-200 bg-white rounded border border-gray-200">
+                        <p class="p-2 text-gray-500 text-center">Đang tải danh sách hồ sơ...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Cột phải: Bản xem trước PDF -->
+        <div class="flex-1 bg-gray-200 flex justify-center items-start py-6 overflow-y-auto px-4">
+            <div id="pdf-content" class="a4-wrapper">
+                
+                <!-- Header -->
+                <div class="text-right italic mb-3">
+                    ASOC-PHKT-QT-03/BM-9.Ban hành 02.Ngày 10/10/2025
+                </div>
+                <div class="mb-4" style="margin-left: 20px;">
+                    <div style="display: inline-block; text-align: center;" class="font-bold">
+                        <div>TCT HÀNG KHÔNG VIỆT NAM</div>
+                        <div>TT DỊCH VỤ VÀ KHAI THÁC SÂN BAY</div>
+                    </div>
+                </div>
+
+                <h1 class="text-center font-bold text-xl mb-3">BÁO CÁO CUNG ỨNG DỊCH VỤ CHUYẾN BAY</h1>
+
+                <!-- Phần 1 -->
+                <div class="mb-1"><span class="font-bold uppercase custom-underline">1. THÔNG TIN CHUYẾN BAY</span></div>
+                <div class="flex-dotted">
+                    <span>CB/Flt.No: VN</span><span class="dotted-line" id="p-fltNo"></span>
+                    <span>Hành trình/Route:</span><span class="dotted-line" id="p-route"></span>
+                    <span>ETD/ATD:</span><span class="dotted-line" id="p-etd"></span>
+                    <span>ETA/ATA:</span><span class="dotted-line" id="p-eta"></span>
+                </div>
+                <div class="flex-dotted mb-4">
+                    <span>Máy bay/AC:</span><span class="dotted-line" id="p-ac"></span>
+                    <span>Config:</span><span class="dotted-line" id="p-config"></span>
+                    <span>Booked:</span><span class="dotted-line" id="p-booked"></span>
+                    <span>O/B:</span><span class="dotted-line" id="p-ob"></span>
+                    <span>Ngày bay:</span><span class="dotted-line" id="p-date"></span>
+                </div>
+
+                <!-- Phần 2 -->
+                <div class="mb-2"><span class="font-bold uppercase custom-underline">2. LOẠI HỒ SƠ:</span></div>
+                <div class="mb-4 leading-relaxed">
+                    <div class="grid grid-cols-[44%_56%] mb-2">
+                        <div class="cb-item"><span class="box" id="p-cb1"></span> Khách sạn/Hotel</div>
+                        <div class="cb-item"><span class="box" id="p-cb2"></span> Khách bị trục xuất-từ chối nhập cảnh/Depo-Inad</div>
+                    </div>
+                    <div class="grid grid-cols-[44%_56%] mb-2">
+                        <div class="cb-item"><span class="box" id="p-cb3"></span> Hạ hạng ghế bắt buộc/Downgrade</div>
+                        <div class="cb-item"><span class="box" id="p-cb4"></span> Khách bị từ chối vận chuyển/Offload</div>
+                    </div>
+                    <div class="grid grid-cols-[44%_56%] mb-2">
+                        <div class="cb-item"><span class="box" id="p-cb5"></span> Vận chuyển mặt đất/Taxi</div>
+                        <div class="cb-item"><span class="box" id="p-cb6"></span> TQ 6/The 6th freedom traffic right</div>
+                    </div>
+                    <div class="grid grid-cols-[44%_56%] mb-2">
+                        <div class="cb-item"><span class="box" id="p-cb7"></span> Ăn, uống TB-TV/Cabin Crew Meal-Drink</div>
+                        <div class="grid grid-cols-[200px_auto]">
+                            <div class="cb-item"><span class="box" id="p-cb8"></span> Tai nạn sự cố/Accident</div>
+                            <div class="cb-item"><span class="box" id="p-cb9"></span> DL quá cảnh /TWOV</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-[44%_56%] mb-2">
+                        <div class="grid grid-cols-[140px_auto]">
+                            <div class="cb-item"><span class="box" id="p-cb10_1"></span> Phục vụ ăn/Meal</div>
+                            <div class="cb-item"><span class="box" id="p-cb10_2"></span> Uống/Drink</div>
+                        </div>
+                        <div class="grid grid-cols-[200px_auto]">
+                            <div class="cb-item"><span class="box" id="p-cb11"></span> Chuyển đổi hành trình/FIM</div>
+                            <div class="cb-item"><span class="box" id="p-cb12"></span> Hành lý/Luggage</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-[44%_56%] mb-2">
+                        <div class="cb-item"><span class="box" id="p-cb13"></span> Phục vụ phòng chờ thương gia</div>
+                        <div class="cb-item"><span class="box" id="p-cb14"></span> Phục hồi và đảm bảo dịch vụ</div>
+                    </div>
+                    <div class="flex-dotted mt-3 mb-0">
+                        <span class="whitespace-nowrap"><span class="box" id="p-cb15"></span> Khác (Ghi rõ nội dung):</span>
+                        <span class="dotted-line" id="p-otherReason"></span>
+                    </div>
+                </div>
+
+                <!-- Phần 3 -->
+                <div class="mb-3">
+                    <div class="flex items-end">
+                        <span class="font-bold uppercase whitespace-nowrap mr-2 custom-underline">3. LÝ DO:</span>
+                        <div class="reason-line" style="margin-top: 0; width: auto; flex-grow: 1;" id="p-r1"></div>
+                    </div>
+                    <div class="reason-line" id="p-r2"></div>
+                    <div class="reason-line" id="p-r3"></div>
+                </div>
+
+                <!-- Phần 4 -->
+                <div class="mb-2 mt-3"><span class="font-bold uppercase custom-underline">4. XÁC NHẬN CUNG ỨNG DỊCH VỤ</span></div>
+                <div class="flex-dotted">
+                    <span>Số khách:</span><span class="dotted-line" style="flex-grow: 1" id="p-guestNo"></span>
+                    <span>Số lượng xe/ vourchers:</span><span class="dotted-line" style="flex-grow: 1" id="p-vouchers"></span>
+                </div>
+                <div class="flex-dotted">
+                    <span>Tổng chi phí:</span><span class="dotted-line" style="flex-grow: 1" id="p-totalCost"></span>
+                </div>
+                <div class="flex-dotted mb-4">
+                    <span>Số/Series:</span><span class="dotted-line" style="flex-grow: 1" id="p-series"></span>
+                </div>
+
+                <!-- Phần 5 -->
+                <div class="mb-2"><span class="font-bold uppercase custom-underline">5. HỒ SƠ ĐÍNH KÈM:</span></div>
+                <div class="grid grid-cols-2 gap-x-8 gap-y-2 mb-2">
+                    <div class="flex items-end"><b>1.</b><span class="dotted-line" id="p-doc1"></span></div>
+                    <div class="flex items-end"><b>5.</b><span class="dotted-line" id="p-doc5"></span></div>
+                    <div class="flex items-end"><b>2.</b><span class="dotted-line" id="p-doc2"></span></div>
+                    <div class="flex items-end"><b>6.</b><span class="dotted-line" id="p-doc6"></span></div>
+                    <div class="flex items-end"><b>3.</b><span class="dotted-line" id="p-doc3"></span></div>
+                    <div class="flex items-end"><b>7.</b><span class="dotted-line" id="p-doc7"></span></div>
+                    <div class="flex items-end"><b>4.</b><span class="dotted-line" id="p-doc4"></span></div>
+                    <div class="flex items-end"><b>8.</b><span class="dotted-line" id="p-doc8"></span></div>
+                </div>
+
+                <!-- Chữ ký & Ngày tháng -->
+                <div class="mt-4"> 
+                    <div class="text-right italic mb-4 mr-4" id="p-signDate">
+                        Tp. HCM, ngày...tháng...năm...
+                    </div>
+                    <div class="flex justify-between text-center font-bold px-4">
+                        <div class="w-1/3">CHUYÊN VIÊN</div>
+                        <div class="w-1/3">CÁN BỘ ĐỘI ASOC</div>
+                        <div class="w-1/3">PHÒNG DVKT</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBSSrwEkRpXn9qkBdBcxXa5LIODCo3v34",
+            authDomain: "bieumau-1728b.firebaseapp.com",
+            projectId: "bieumau-1728b",
+            storageBucket: "bieumau-1728b.firebasestorage.app",
+            messagingSenderId: "399142644115",
+            appId: "1:399142644115:web:3f26cadc428373863c6066"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.switchTab = function(tabName) {
+            let tabCreate = document.getElementById('tab-create');
+            let tabList = document.getElementById('tab-list');
+            let contentCreate = document.getElementById('content-create');
+            let contentList = document.getElementById('content-list');
+
+            if(tabName === 'create') {
+                tabCreate.className = "flex-1 py-2 text-center font-bold text-sm text-blue-600 border-b-2 border-blue-600 transition";
+                tabList.className = "flex-1 py-2 text-center font-bold text-sm text-gray-500 border-b-2 border-transparent transition";
+                contentCreate.classList.remove('hidden');
+                contentList.classList.add('hidden');
+            } else {
+                tabList.className = "flex-1 py-2 text-center font-bold text-sm text-blue-600 border-b-2 border-blue-600 transition";
+                tabCreate.className = "flex-1 py-2 text-center font-bold text-sm text-gray-500 border-b-2 border-transparent transition";
+                contentList.classList.remove('hidden');
+                contentCreate.classList.add('hidden');
+            }
+        };
+
+        const allCheckboxes = [];
+        for(let i=1; i<=15; i++) {
+            let cb = document.getElementById('cb' + i);
+            if(cb) allCheckboxes.push(cb);
+        }
+        if(document.getElementById('cb10_1')) allCheckboxes.push(document.getElementById('cb10_1'));
+        if(document.getElementById('cb10_2')) allCheckboxes.push(document.getElementById('cb10_2'));
+
+        allCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if(this.checked) {
+                    allCheckboxes.forEach(other => {
+                        if(other !== this) {
+                            other.checked = false;
+                            other.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }
+            });
+        });
+
+        function formatDateToDDMMMYYYY(dateStr) {
+            if(!dateStr) return { ddmm: "NoDate", fullVN: "" };
+            let parts = dateStr.split('-');
+            let yyyy = parts[0];
+            let mm = parseInt(parts[1], 10);
+            let dd = parts[2];
+
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            let mmm = months[mm - 1];
+            return {
+                ddmm: `${dd}${mmm}`,
+                fullVN: `ngày ${dd} tháng ${mm} năm ${yyyy}`
+            };
+        }
+
+        function getSelectedServiceType() {
+            for(let i=1; i<=15; i++) {
+                let cb = document.getElementById('cb' + i);
+                if(cb && cb.checked) {
+                    return cb.getAttribute('data-eng') || "Service";
+                }
+            }
+            if(document.getElementById('cb10_1') && document.getElementById('cb10_1').checked) return "Meal";
+            if(document.getElementById('cb10_2') && document.getElementById('cb10_2').checked) return "Drink";
+            return "Service";
+        }
+
+        function displayRecords(querySnapshot) {
+            let resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+
+            if(querySnapshot.empty) {
+                resultsContainer.innerHTML = '<p class="p-2 text-gray-500 text-center">Chưa có hồ sơ nào được lưu</p>';
+                return;
+            }
+
+            querySnapshot.forEach((docSnap) => {
+                let data = docSnap.data();
+                let docId = docSnap.id;
+                let div = document.createElement('div');
+                div.className = "p-2 hover:bg-blue-50 flex justify-between items-center";
+                div.innerHTML = `<span class="cursor-pointer flex-grow" title="Bấm để tải lại">${data.recordName || data.fltNo}</span>
+                                 <div class="flex gap-1">
+                                     <button onclick="loadRecord('${docId}')" class="bg-blue-500 text-white px-2 py-0.5 rounded text-[10px]">Tải lại</button>
+                                     <button onclick="deleteRecord('${docId}', '${data.recordName}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[10px]">Xóa</button>
+                                 </div>`;
+                
+                div.querySelector('span').onclick = function() {
+                    loadRecordData(data);
+                };
+
+                resultsContainer.appendChild(div);
+            });
+        }
+
+        window.loadRecord = async function(docId) {
+            let querySnapshot = await getDocs(collection(db, "hoso_cungung"));
+            querySnapshot.forEach((docSnap) => {
+                if(docSnap.id === docId) {
+                    loadRecordData(docSnap.data());
+                }
+            });
+        };
+
+        function loadRecordData(data) {
+            document.getElementById('fltNo').value = data.fltNo || '';
+            document.getElementById('route').value = data.route || '';
+            document.getElementById('etd').value = data.etd || '';
+            document.getElementById('eta').value = data.eta || '';
+            document.getElementById('ac').value = data.ac || '';
+            document.getElementById('config').value = data.config || '';
+            document.getElementById('booked').value = data.booked || '';
+            document.getElementById('ob').value = data.ob || '';
+            document.getElementById('date').value = data.date || '';
+            document.getElementById('otherReason').value = data.otherReason || '';
+            document.getElementById('reasonText').value = data.reasonText || '';
+            document.getElementById('guestNo').value = data.guestNo || '';
+            document.getElementById('totalCost').value = data.totalCost || '';
+            document.getElementById('series').value = data.series || '';
+            document.getElementById('vouchers').value = data.vouchers || '';
+            
+            for(let i=1; i<=8; i++) {
+                let docInput = document.getElementById('doc' + i);
+                if(docInput) docInput.value = data['doc' + i] || '';
+            }
+
+            for(let i=1; i<=15; i++) {
+                let cb = document.getElementById('cb' + i);
+                if(cb) {
+                    cb.checked = !!data['cb' + i];
+                    cb.dispatchEvent(new Event('change'));
+                }
+            }
+            if(document.getElementById('cb10_1')) {
+                document.getElementById('cb10_1').checked = !!data['cb10_1'];
+                document.getElementById('cb10_1').dispatchEvent(new Event('change'));
+            }
+            if(document.getElementById('cb10_2')) {
+                document.getElementById('cb10_2').checked = !!data['cb10_2'];
+                document.getElementById('cb10_2').dispatchEvent(new Event('change'));
+            }
+
+            // Xử lý loại bỏ chữ VN để chỉ lấy số khi đưa vào preview PDF
+            let cleanFltNo = (data.fltNo || '').replace(/^VN/i, '').trim();
+            updatePreview('fltNo', cleanFltNo);
+
+            document.getElementById('route').dispatchEvent(new Event('input'));
+            document.getElementById('etd').dispatchEvent(new Event('input'));
+            document.getElementById('eta').dispatchEvent(new Event('input'));
+            document.getElementById('ac').dispatchEvent(new Event('change'));
+            document.getElementById('config').dispatchEvent(new Event('input'));
+            document.getElementById('booked').dispatchEvent(new Event('input'));
+            document.getElementById('ob').dispatchEvent(new Event('input'));
+            document.getElementById('date').dispatchEvent(new Event('input'));
+            document.getElementById('otherReason').dispatchEvent(new Event('input'));
+            document.getElementById('reasonText').dispatchEvent(new Event('input'));
+            document.getElementById('guestNo').dispatchEvent(new Event('input'));
+            document.getElementById('totalCost').dispatchEvent(new Event('input'));
+            document.getElementById('series').dispatchEvent(new Event('input'));
+            document.getElementById('vouchers').dispatchEvent(new Event('input'));
+
+            for(let i=1; i<=8; i++) {
+                let docInput = document.getElementById('doc' + i);
+                if(docInput) docInput.dispatchEvent(new Event('input'));
+            }
+
+            for(let i=1; i<=15; i++) {
+                let pCb = document.getElementById('p-cb' + i);
+                let cb = document.getElementById('cb' + i);
+                if(pCb && cb) pCb.innerText = cb.checked ? 'x' : '';
+            }
+            if(document.getElementById('p-cb10_1') && document.getElementById('cb10_1')) {
+                document.getElementById('p-cb10_1').innerText = document.getElementById('cb10_1').checked ? 'x' : '';
+            }
+            if(document.getElementById('p-cb10_2') && document.getElementById('cb10_2')) {
+                document.getElementById('p-cb10_2').innerText = document.getElementById('cb10_2').checked ? 'x' : '';
+            }
+            
+            switchTab('create');
+            alert("Đã nạp lại hồ sơ: " + data.recordName);
+        }
+
+        window.deleteRecord = async function(docId, recordName) {
+            if(confirm(`Bạn có chắc chắn muốn xóa hồ sơ "${recordName}" không?`)) {
+                try {
+                    await deleteDoc(doc(db, "hoso_cungung", docId));
+                    alert("Đã xóa hồ sơ thành công!");
+                    loadAllRecords();
+                } catch(e) {
+                    console.error("Lỗi khi xóa: ", e);
+                    alert("Không thể xóa hồ sơ.");
+                }
+            }
+        };
+
+        async function loadAllRecords() {
+            try {
+                let querySnapshot = await getDocs(collection(db, "hoso_cungung"));
+                displayRecords(querySnapshot);
+            } catch(e) {
+                console.error("Lỗi tải danh sách:", e);
+            }
+        }
+        loadAllRecords();
+
+        window.saveToFirebase = async function() {
+            let fieldsToCheck = [
+                { id: 'fltNo', el: document.getElementById('fltNo') },
+                { id: 'route', el: document.getElementById('route') },
+                { id: 'ac', el: document.getElementById('ac') },
+                { id: 'config', el: document.getElementById('config') },
+                { id: 'booked', el: document.getElementById('booked') },
+                { id: 'ob', el: document.getElementById('ob') },
+                { id: 'date', el: document.getElementById('date') },
+                { id: 'reasonText', el: document.getElementById('reasonText') }
+            ];
+
+            let hasError = false;
+            fieldsToCheck.forEach(item => {
+                if(!item.el.value.trim()) {
+                    item.el.classList.add('input-error');
+                    hasError = true;
+                } else {
+                    item.el.classList.remove('input-error');
+                }
+            });
+
+            let etdVal = document.getElementById('etd').value.trim();
+            let etaVal = document.getElementById('eta').value.trim();
+            let etdEl = document.getElementById('etd');
+            let etaEl = document.getElementById('eta');
+
+            if(!etdVal && !etaVal) {
+                etdEl.classList.add('input-error');
+                etaEl.classList.add('input-error');
+                hasError = true;
+            } else {
+                etdEl.classList.remove('input-error');
+                etaEl.classList.remove('input-error');
+            }
+
+            let hasServiceSelected = false;
+            for(let i=1; i<=15; i++) {
+                let cb = document.getElementById('cb' + i);
+                if(cb && cb.checked) hasServiceSelected = true;
+            }
+            if(document.getElementById('cb10_1').checked || document.getElementById('cb10_2').checked) hasServiceSelected = true;
+
+            if(!hasServiceSelected) {
+                hasError = true;
+            }
+
+            if(hasError) {
+                alert("Vui lòng điền đầy đủ các trường bắt buộc (các ô viền đỏ) và chọn 1 loại hồ sơ!");
+                return;
+            }
+
+            let fltNo = document.getElementById('fltNo').value.trim();
+            let date = document.getElementById('date').value;
+
+            let dateInfo = formatDateToDDMMMYYYY(date);
+            let serviceType = getSelectedServiceType();
+            let recordName = `${fltNo}-${dateInfo.ddmm}-${serviceType}`;
+
+            let formData = {
+                recordName: recordName,
+                fltNo: fltNo,
+                route: document.getElementById('route').value,
+                etd: document.getElementById('etd').value,
+                eta: document.getElementById('eta').value,
+                ac: document.getElementById('ac').value,
+                config: document.getElementById('config').value,
+                booked: document.getElementById('booked').value,
+                ob: document.getElementById('ob').value,
+                date: date,
+                otherReason: document.getElementById('otherReason').value,
+                reasonText: document.getElementById('reasonText').value,
+                guestNo: document.getElementById('guestNo').value,
+                totalCost: document.getElementById('totalCost').value,
+                series: document.getElementById('series').value,
+                vouchers: document.getElementById('vouchers').value,
+                doc1: document.getElementById('doc1').value,
+                doc2: document.getElementById('doc2').value,
+                doc3: document.getElementById('doc3').value,
+                doc4: document.getElementById('doc4').value,
+                doc5: document.getElementById('doc5').value,
+                doc6: document.getElementById('doc6').value,
+                doc7: document.getElementById('doc7').value,
+                doc8: document.getElementById('doc8').value,
+                createdAt: new Date().toISOString()
+            };
+
+            for(let i=1; i<=15; i++) {
+                let cb = document.getElementById('cb' + i);
+                if(cb) formData['cb' + i] = cb.checked;
+            }
+            if(document.getElementById('cb10_1')) formData['cb10_1'] = document.getElementById('cb10_1').checked;
+            if(document.getElementById('cb10_2')) formData['cb10_2'] = document.getElementById('cb10_2').checked;
+
+            try {
+                await addDoc(collection(db, "hoso_cungung"), formData);
+                alert("Đã lưu hồ sơ thành công!\nTên hồ sơ: " + recordName);
+                loadAllRecords();
+            } catch (e) {
+                console.error("Lỗi khi lưu: ", e);
+                alert("Lỗi khi lưu hồ sơ.");
+            }
+        };
+
+        window.searchRecords = async function() {
+            let searchFlt = document.getElementById('searchFltNo').value.trim().toUpperCase();
+            let searchDate = document.getElementById('searchDate').value;
+            let resultsContainer = document.getElementById('searchResults');
+            
+            resultsContainer.innerHTML = '<p class="p-2 text-gray-500 text-center">Đang tìm kiếm...</p>';
+
+            try {
+                let q = collection(db, "hoso_cungung");
+                let conditions = [];
+                if(searchFlt) {
+                    if(/^\d+$/.test(searchFlt)) searchFlt = "VN" + searchFlt;
+                    conditions.push(where("fltNo", "==", searchFlt));
+                }
+                if(searchDate) {
+                    conditions.push(where("date", "==", searchDate));
+                }
+
+                let queryRef = conditions.length > 0 ? query(q, ...conditions) : q;
+                let querySnapshot = await getDocs(queryRef);
+                displayRecords(querySnapshot);
+
+            } catch (e) {
+                console.error("Lỗi tìm kiếm: ", e);
+                resultsContainer.innerHTML = '<p class="p-2 text-red-500 text-center">Lỗi truy vấn</p>';
+            }
+        };
+    </script>
+
+    <script>
+        const flightData = {
+            "VN106": { route: "SGN-DAD", time: "05:45", ac: "32N" },
+            "VN1366": { route: "SGN-HUI", time: "05:45", ac: "32F" },
+            "VN1380": { route: "SGN-DLI", time: "05:50", ac: "32C" },
+            "VN7108": { route: "SGN-DAD", time: "05:50", ac: "32E" },
+            "VN1392": { route: "SGN-UIH", time: "06:00", ac: "32C" },
+            "VN206": { route: "SGN-HAN", time: "06:21", ac: "35B" },
+            "VN7276": { route: "SGN-THD", time: "06:05", ac: "32N" },
+            "VN1464": { route: "SGN-VCL", time: "06:20", ac: "32N" },
+            "VN7210": { route: "SGN-HAN", time: "06:25", ac: "32F" },
+            "VN110": { route: "SGN-DAD", time: "06:45", ac: "32D" },
+            "VN1404": { route: "SGN-VDH", time: "06:55", ac: "32C" },
+            "VN240": { route: "SGN-HAN", time: "07:00", ac: "78A" },
+            "VN1340": { route: "SGN-CXR", time: "06:50", ac: "32K" },
+            "VN1660": { route: "SGN-TBB", time: "07:25", ac: "32V" },
+            "VN1176": { route: "SGN-HPH", time: "07:35", ac: "32D" },
+            "VN208": { route: "SGN-HAN", time: "08:00", ac: "35B" },
+            "VN112": { route: "SGN-DAD", time: "08:00", ac: "32F" },
+            "VN1823": { route: "SGN-PQC", time: "08:05", ac: "32E" },
+            "VN244": { route: "SGN-HAN", time: "10:10", ac: "78C" },
+            "VN7416": { route: "SGN-BMV", time: "09:05", ac: "32F" },
+            "VN1342": { route: "SGN-CXR", time: "09:05", ac: "32F" },
+            "VN122": { route: "SGN-DAD", time: "10:00", ac: "32F" },
+            "VN210": { route: "SGN-HAN", time: "10:30", ac: "78A" },
+            "VN1382": { route: "SGN-DLI", time: "10:20", ac: "32C" },
+            "VN1825": { route: "SGN-PQC", time: "11:00", ac: "32K" },
+            "VN1272": { route: "SGN-THD", time: "10:55", ac: "32D" },
+            "VN1264": { route: "SGN-VII", time: "10:40", ac: "32N" },
+            "VN126": { route: "SGN-DAD", time: "11:00", ac: "32V" },
+            "VN246": { route: "SGN-HAN", time: "11:00", ac: "35A" },
+            "VN1370": { route: "SGN-HUI", time: "11:05", ac: "32C" },
+            "VN7184": { route: "SGN-HPH", time: "11:20", ac: "32N" },
+            "VN1276": { route: "SGN-THD", time: "11:25", ac: "32E" },
+            "VN212": { route: "SGN-HAN", time: "12:00", ac: "35B" },
+            "VN7230": { route: "SGN-HAN", time: "12:10", ac: "32F" },
+            "VN7346": { route: "SGN-CXR", time: "12:10", ac: "32F" },
+            "VN7392": { route: "SGN-UIH", time: "12:35", ac: "32F" },
+            "VN248": { route: "SGN-HAN", time: "13:00", ac: "78A" },
+            "VN1827": { route: "SGN-PQC", time: "13:45", ac: "32N" },
+            "VN1344": { route: "SGN-CXR", time: "13:05", ac: "32D" },
+            "VN1394": { route: "SGN-UIH", time: "15:50", ac: "32N" },
+            "VN214": { route: "SGN-HAN", time: "14:01", ac: "35B" },
+            "VN7388": { route: "SGN-DLI", time: "14:05", ac: "32F" },
+            "VN1266": { route: "SGN-VII", time: "14:55", ac: "32K" },
+            "VN1422": { route: "SGN-PXU", time: "14:45", ac: "32F" },
+            "VN250": { route: "SGN-HAN", time: "15:00", ac: "78C" },
+            "VN7256": { route: "SGN-HAN", time: "15:10", ac: "78C" },
+            "VN7024": { route: "SGN-HPH", time: "15:50", ac: "32A" },
+            "VN1829": { route: "SGN-PQC", time: "15:50", ac: "32F" },
+            "VN1468": { route: "SGN-VCL", time: "16:10", ac: "32D" },
+            "VN136": { route: "SGN-DAD", time: "16:00", ac: "32V" },
+            "VN216": { route: "SGN-HAN", time: "16:35", ac: "78A" },
+            "VN7258": { route: "SGN-HAN", time: "16:30", ac: "32N" },
+            "VN252": { route: "SGN-HAN", time: "16:40", ac: "78C" },
+            "VN140": { route: "SGN-DAD", time: "16:45", ac: "32E" },
+            "VN7188": { route: "SGN-HPH", time: "17:07", ac: "32N" },
+            "VN254": { route: "SGN-HAN", time: "17:35", ac: "35A" },
+            "VN1386": { route: "SGN-DLI", time: "17:30", ac: "32C" },
+            "VN7250": { route: "SGN-HAN", time: "17:40", ac: "35B" },
+            "VN1186": { route: "SGN-HPH", time: "17:55", ac: "32N" },
+            "VN218": { route: "SGN-HAN", time: "18:00", ac: "78A" },
+            "VN1414": { route: "BMV-SGN", time: "18:25", ac: "32E" },
+            "VN1268": { route: "SGN-VII", time: "18:55", ac: "32F" },
+            "VN258": { route: "SGN-HAN", time: "19:00", ac: "78C" },
+            "VN142": { route: "SGN-DAD", time: "19:25", ac: "32K" },
+            "VN7252": { route: "SGN-HAN", time: "19:25", ac: "32E" },
+            "VN146": { route: "SGN-DAD", time: "19:35", ac: "32F" },
+            "VN220": { route: "SGN-HAN", time: "20:00", ac: "35A" },
+            "VN1376": { route: "SGN-HUI", time: "20:10", ac: "32V" },
+            "VN1835": { route: "SGN-PQC", time: "20:30", ac: "32D" },
+            "VN256": { route: "SGN-HAN", time: "20:30", ac: "78C" },
+            "VN260": { route: "SGN-HAN", time: "21:00", ac: "78C" },
+            "VN148": { route: "SGN-DAD", time: "21:05", ac: "32N" },
+            "VN224": { route: "SGN-HAN", time: "22:55", ac: "78C" },
+            "VN270": { route: "SGN-HAN", time: "23:00", ac: "32C" },
+            "VN118": { route: "SGN-DAD", time: "09:05", ac: "32A" },
+            "VN7340": { route: "SGN-CXR", time: "12:30", ac: "32D" },
+            "VN132": { route: "SGN-DAD", time: "13:25", ac: "32A" },
+            "VN134": { route: "SGN-DAD", time: "15:30", ac: "32F" },
+            "VN1374": { route: "SGN-HUI", time: "15:35", ac: "32N" },
+            "VN7382": { route: "SGN-DLI", time: "16:00", ac: "32F" },
+            "VN7264": { route: "SGN-VII", time: "16:45", ac: "32N" },
+            "VN524": { route: "SGN-PVG", time: "07:20", ac: "78B" },
+            "VN582": { route: "SGN-KHH", time: "07:45", ac: "32N" },
+            "VN601": { route: "SGN-BKK", time: "08:40", ac: "32C" },
+            "VN402": { route: "SGN-ICN", time: "09:05", ac: "32A" },
+            "VN651": { route: "SGN-SIN", time: "09:10", ac: "32F" },
+            "VN631": { route: "SGN-CGK", time: "09:52", ac: "32C" },
+            "VN641": { route: "SGN-DPS", time: "10:10", ac: "32C" },
+            "VN502": { route: "SGN-CAN", time: "10:10", ac: "32N" },
+            "VN605": { route: "SGN-BKK", time: "11:50", ac: "32D" },
+            "VN594": { route: "SGN-HKG", time: "13:35", ac: "32C" },
+            "VN655": { route: "SGN-SIN", time: "14:25", ac: "32C" },
+            "VN920": { route: "SGN-KTI", time: "16:05", ac: "32C" },
+            "VN679": { route: "SGN-KUL", time: "16:20", ac: "32C" },
+            "VN607": { route: "SGN-BKK", time: "17:25", ac: "32E" },
+            "VN657": { route: "SGN-SIN", time: "17:00", ac: "32F" },
+            "VN570": { route: "SGN-TPE", time: "17:14", ac: "32C" },
+            "VN813": { route: "SGN-SAI", time: "17:55", ac: "32N" },
+            "VN580": { route: "SGN-KHH", time: "17:58", ac: "32C" },
+            "VN979": { route: "SGN-BOM", time: "18:00", ac: "78A" },
+            "VN609": { route: "SGN-BKK", time: "18:20", ac: "32C" },
+            "VN773": { route: "SGN-SYD", time: "20:45", ac: "35B" },
+            "VN781": { route: "SGN-MEL", time: "21:55", ac: "35B" },
+            "VN671": { route: "SGN-CMB", time: "21:35", ac: "32A" },
+            "VN31": { route: "SGN-FRA", time: "23:00", ac: "78A" },
+            "VN39": { route: "SGN-CPH", time: "23:25", ac: "78B" },
+            "VN648": { route: "SGN-MNL", time: "23:25", ac: "32C" },
+            "VN408": { route: "ICN-SGN", time: "13:45", ac: "78C" },
+            "VN342": { route: "NGO-SGN", time: "00:05", ac: "32A" },
+            "VN320": { route: "KIX-SGN", time: "00:10", ac: "35A" },
+            "VN306": { route: "NRT-SGN", time: "00:20", ac: "78C" },
+            "VN422": { route: "PUS-SGN", time: "01:14", ac: "78B" },
+            "VN38": { route: "CPH-SGN", time: "04:25", ac: "78A" },
+            "VN99": { route: "SFO-SGN", time: "04:30", ac: "35B" },
+            "VN649": { route: "MNL-SGN", time: "05:50", ac: "32N" },
+            "VN790": { route: "PER-SGN", time: "05:55", ac: "78B" },
+            "VN976": { route: "DEL-SGN", time: "06:05", ac: "78A" },
+            "VN30": { route: "FRA-SGN", time: "06:25", ac: "35B" },
+            "VN205": { route: "HAN-SGN", time: "07:10", ac: "32C" },
+            "VN1381": { route: "DLI-SGN", time: "08:15", ac: "32A" },
+            "VN1393": { route: "UIH-SGN", time: "09:00", ac: "32C" },
+            "VN207": { route: "HAN-SGN", time: "09:10", ac: "32K" },
+            "VN107": { route: "DAD-SGN", time: "09:15", ac: "32N" },
+            "VN7109": { route: "DAD-SGN", time: "09:20", ac: "32C" },
+            "VN1367": { route: "HUI-SGN", time: "09:20", ac: "32C" },
+            "VN581": { route: "KHH-SGN", time: "09:30", ac: "32C" },
+            "VN1465": { route: "VCL-SGN", time: "09:45", ac: "32F" },
+            "VN1341": { route: "CXR-SGN", time: "09:45", ac: "32E" },
+            "VN245": { route: "HAN-SGN", time: "10:10", ac: "78A" },
+            "VN109": { route: "DAD-SGN", time: "10:15", ac: "32A" },
+            "VN1661": { route: "TBB-SGN", time: "10:20", ac: "32F" },
+            "VN571": { route: "TPE-SGN", time: "10:20", ac: "32C" },
+            "VN7275": { route: "THD-SGN", time: "10:40", ac: "32F" },
+            "VN1405": { route: "VDH-SGN", time: "10:45", ac: "32D" },
+            "VN1822": { route: "PQC-SGN", time: "11:00", ac: "32F" },
+            "VN209": { route: "HAN-SGN", time: "11:10", ac: "35A" },
+            "VN7231": { route: "HAN-SGN", time: "11:10", ac: "35B" },
+            "VN113": { route: "DAD-SGN", time: "11:30", ac: "32N" },
+            "VN7341": { route: "CXR-SGN", time: "11:40", ac: "32D" },
+            "VN1343": { route: "CXR-SGN", time: "11:50", ac: "32F" },
+            "VN247": { route: "HAN-SGN", time: "12:10", ac: "78A" },
+            "VN1177": { route: "HPH-SGN", time: "12:20", ac: "32F" },
+            "VN517": { route: "PKX-SGN", time: "12:35", ac: "32C" },
+            "VN1383": { route: "DLI-SGN", time: "12:45", ac: "32C" },
+            "VN7417": { route: "BMV-SGN", time: "12:50", ac: "32F" },
+            "VN423": { route: "PUS-SGN", time: "12:55", ac: "78B" },
+            "VN600": { route: "BKK-SGN", time: "13:05", ac: "32C" },
+            "VN211": { route: "HAN-SGN", time: "13:10", ac: "35B" },
+            "VN1824": { route: "PQC-SGN", time: "13:15", ac: "32K" },
+            "VN123": { route: "DAD-SGN", time: "13:25", ac: "32C" },
+            "VN321": { route: "KIX-SGN", time: "13:25", ac: "35A" },
+            "VN307": { route: "NRT-SGN", time: "13:30", ac: "78C" },
+            "VN50": { route: "LHR-SGN", time: "13:35", ac: "78A" },
+            "VN409": { route: "ICN-SGN", time: "13:45", ac: "78C" },
+            "VN251": { route: "HAN-SGN", time: "14:10", ac: "35B" },
+            "VN650": { route: "SIN-SGN", time: "14:25", ac: "32F" },
+            "VN1371": { route: "HUI-SGN", time: "14:35", ac: "32C" },
+            "VN127": { route: "DAD-SGN", time: "14:50", ac: "32F" },
+            "VN583": { route: "KHH-SGN", time: "15:00", ac: "32N" },
+            "VN129": { route: "DAD-SGN", time: "15:05", ac: "32A" },
+            "VN1265": { route: "VII-SGN", time: "15:10", ac: "32A" },
+            "VN921": { route: "KTI-SGN", time: "15:15", ac: "32C" },
+            "VN7347": { route: "CXR-SGN", time: "15:15", ac: "32F" },
+            "VN1273": { route: "THD-SGN", time: "15:35", ac: "32F" },
+            "VN1826": { route: "PQC-SGN", time: "15:45", ac: "32F" },
+            "VN213": { route: "HAN-SGN", time: "16:00", ac: "78A" },
+            "VN7185": { route: "HPH-SGN", time: "16:05", ac: "32E" },
+            "VN1345": { route: "CXR-SGN", time: "16:05", ac: "32C" },
+            "VN604": { route: "BKK-SGN", time: "16:10", ac: "32D" },
+            "VN780": { route: "MEL-SGN", time: "16:15", ac: "35B" },
+            "VN772": { route: "SYD-SGN", time: "16:15", ac: "35B" },
+            "VN1277": { route: "THD-SGN", time: "16:45", ac: "32N" },
+            "VN1395": { route: "UIH-SGN", time: "16:50", ac: "32C" },
+            "VN133": { route: "DAD-SGN", time: "16:55", ac: "32F" },
+            "VN630": { route: "CGK-SGN", time: "17:05", ac: "32C" },
+            "VN253": { route: "HAN-SGN", time: "17:05", ac: "35B" },
+            "VN215": { route: "HAN-SGN", time: "17:10", ac: "78C" },
+            "VN503": { route: "CAN-SGN", time: "17:20", ac: "32N" },
+            "VN7207": { route: "HAN-SGN", time: "17:45", ac: "78C" },
+            "VN7389": { route: "DLI-SGN", time: "18:00", ac: "32F" },
+            "VN1423": { route: "PXU-SGN", time: "18:00", ac: "32F" },
+            "VN273": { route: "HAN-SGN", time: "18:10", ac: "78C" },
+            "VN1267": { route: "VII-SGN", time: "18:30", ac: "32K" },
+            "VN525": { route: "PVG-SGN", time: "18:30", ac: "78B" },
+            "VN1828": { route: "PQC-SGN", time: "18:30", ac: "32N" },
+            "VN640": { route: "DPS-SGN", time: "18:40", ac: "32C" },
+            "VN217": { route: "HAN-SGN", time: "19:10", ac: "78C" },
+            "VN135": { route: "DAD-SGN", time: "19:25", ac: "32F" },
+            "VN1375": { route: "HUI-SGN", time: "19:25", ac: "32A" },
+            "VN654": { route: "SIN-SGN", time: "19:40", ac: "32C" },
+            "VN257": { route: "HAN-SGN", time: "19:45", ac: "78A" },
+            "VN137": { route: "DAD-SGN", time: "19:45", ac: "32F" },
+            "VN1469": { route: "VCL-SGN", time: "19:50", ac: "32D" },
+            "VN1387": { route: "DLI-SGN", time: "19:55", ac: "32F" },
+            "VN259": { route: "HAN-SGN", time: "20:10", ac: "78C" },
+            "VN595": { route: "HKG-SGN", time: "20:25", ac: "32C" },
+            "VN812": { route: "SAI-SGN", time: "20:40", ac: "32N" },
+            "VN7025": { route: "HPH-SGN", time: "20:45", ac: "32A" },
+            "VN1415": {route: "BMV-SGN", time: "21:05", ac: "32F" },
+            "VN219": { route: "HAN-SGN", time: "21:10", ac: "78B" },
+            "VN606": { route: "BKK-SGN", time: "21:15", ac: "32E" },
+            "VN403": { route: "ICN-SGN", time: "21:20", ac: "32A" },
+            "VN678": { route: "KUL-SGN", time: "21:30", ac: "32C" },
+            "VN263": { route: "HAN-SGN", time: "22:10", ac: "32N" },
+            "VN656": { route: "SIN-SGN", time: "22:15", ac: "32F" },
+            "VN265": { route: "HAN-SGN", time: "22:45", ac: "35A" },
+            "VN1187": { route: "HPH-SGN", time: "22:50", ac: "32N" },
+            "VN143": { route: "DAD-SGN", time: "22:55", ac: "32K" },
+            "VN608": { route: "BKK-SGN", time: "23:00", ac: "32C" },
+            "VN221": { route: "HAN-SGN", time: "23:10", ac: "32A" },
+            "VN1834": { route: "PQC-SGN", time: "23:15", ac: "32C" },
+            "VN1269": { route: "VII-SGN", time: "23:25", ac: "32F" },
+            "VN1377": { route: "HUI-SGN", time: "23:45", ac: "32N" },
+            "VN267": { route: "HAN-SGN", time: "00:10", ac: "32C" },
+            "VN243": { route: "HAN-SGN", time: "08:10", ac: "32N" },
+            "VN119": { route: "DAD-SGN", time: "12:35", ac: "32F" },
+            "VN141": { route: "DAD-SGN", time: "20:15", ac: "32N" },
+            "VN7265": { route: "VII-SGN", time: "21:00", ac: "32N" },
+            "VN7189": { route: "HPH-SGN", time: "21:45", ac: "32F" }
+        };
+
+        const configData = {
+            "32A": "16J162Y", "32C": "16J168Y", "32D": "8J195Y", "32E": "8J195Y",
+            "32F": "8J201Y", "32K": "18W168Y", "32N": "8J195Y", "32V": "16J168Y",
+            "35A": "29J45W231Y", "35B": "29J36W240Y",
+            "78A": "28J35W211Y", "78B": "28J283Y", "78C": "24J343Y"
+        };
+
+        function updatePreview(id, value) {
+            const el = document.getElementById('p-' + id);
+            if (el) {
+                // Nếu là số hiệu chuyến bay, tự động cắt bỏ chữ VN để tránh bị lặp với chữ VN in sẵn trên biểu mẫu
+                if(id === 'fltNo') {
+                    value = value.replace(/^VN/i, '').trim();
+                }
+                el.innerText = value;
+            }
+        }
+
+        document.getElementById('fltNo').addEventListener('blur', function(e) {
+            let val = e.target.value.trim().toUpperCase();
+            
+            if (/^\d+$/.test(val)) {
+                val = "VN" + val;
+                e.target.value = val;
+            }
+            updatePreview('fltNo', e.target.value);
+
+            if (flightData[val]) {
+                document.getElementById('route').value = flightData[val].route;
+                updatePreview('route', flightData[val].route);
+
+                document.getElementById('etd').value = "";
+                document.getElementById('eta').value = "";
+                updatePreview('etd', "");
+                updatePreview('eta', "");
+
+                if (flightData[val].route.endsWith('-SGN')) {
+                    document.getElementById('eta').value = flightData[val].time;
+                    updatePreview('eta', flightData[val].time);
+                } else {
+                    document.getElementById('etd').value = flightData[val].time;
+                    updatePreview('etd', flightData[val].time);
+                }
+
+                document.getElementById('ac').value = flightData[val].ac;
+                updatePreview('ac', flightData[val].ac);
+
+                let acType = flightData[val].ac;
+                if (configData[acType]) {
+                    document.getElementById('config').value = configData[acType];
+                    updatePreview('config', configData[acType]);
+                }
+            }
+        });
+
+        document.getElementById('fltNo').addEventListener('input', function(e) {
+            updatePreview('fltNo', e.target.value);
+        });
+
+        document.getElementById('ac').addEventListener('change', function(e) {
+            let acType = e.target.value;
+            updatePreview('ac', acType);
+            
+            if (configData[acType]) {
+                document.getElementById('config').value = configData[acType];
+                updatePreview('config', configData[acType]);
+            } else {
+                document.getElementById('config').value = "";
+                updatePreview('config', "");
+            }
+        });
+
+        document.getElementById('date').addEventListener('input', function(e) {
+            let val = e.target.value; 
+            if(val) {
+                let parts = val.split('-');
+                let dd = parts[2];
+                let mm = parseInt(parts[1], 10);
+                let yyyy = parts[0];
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                let mmm = months[mm - 1];
+                
+                updatePreview('date', `${dd}-${mmm}-${yyyy}`);
+                document.getElementById('p-signDate').innerText = `Tp. HCM, ngày ${dd} tháng ${mm} năm ${yyyy}`;
+            } else {
+                updatePreview('date', '');
+                document.getElementById('p-signDate').innerText = 'Tp. HCM, ngày...tháng...năm...';
+            }
+        });
+
+        document.getElementById('totalCost').addEventListener('input', function(e) {
+            let rawValue = e.target.value.replace(/[^0-9]/g, '');
+            if(rawValue) {
+                let formattedValue = parseInt(rawValue, 10).toLocaleString('vi-VN');
+                e.target.value = formattedValue;
+                updatePreview('totalCost', formattedValue);
+            } else {
+                e.target.value = '';
+                updatePreview('totalCost', '');
+            }
+        });
+
+        const textInputs = ['route', 'etd', 'eta', 'config', 'booked', 'ob', 'otherReason', 'guestNo', 'series', 'vouchers', 'doc1', 'doc2', 'doc3', 'doc4', 'doc5', 'doc6', 'doc7', 'doc8'];
+        textInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', function(e) {
+                updatePreview(id, e.target.value);
+            });
+        });
+
+        document.getElementById('reasonText').addEventListener('input', function(e) {
+            let text = e.target.value;
+            let lines = text.split('\n');
+            document.getElementById('p-r1').innerText = lines[0] || '';
+            document.getElementById('p-r2').innerText = lines[1] || '';
+            document.getElementById('p-r3').innerText = lines[2] || '';
+        });
+
+        const checkboxes = ['cb1','cb2','cb3','cb4','cb5','cb6','cb7','cb8','cb9','cb10_1','cb10_2','cb11','cb12','cb13','cb14','cb15'];
+        checkboxes.forEach(id => {
+            document.getElementById(id).addEventListener('change', function(e) {
+                document.getElementById('p-' + id).innerText = e.target.checked ? 'x' : '';
+            });
+        });
+
+        function generatePDF() {
+            const element = document.getElementById('pdf-content');
+            const opt = {
+                margin:       0,
+                filename:     'Bao_Cao_Cung_Ung_Dich_Vu.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
