@@ -248,10 +248,13 @@
                     <input type="text" id="doc8" placeholder="8." class="w-full px-2 py-1 border-b border-gray-400 focus:outline-none">
                 </div>
 
-                <!-- Nút Lưu hồ sơ -->
-                <div class="mb-8">
-                    <button onclick="saveToFirebase()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold shadow transition text-sm">
+                <!-- Nút Lưu hồ sơ & Nút Refresh (Tạo mới) -->
+                <div class="mb-8 flex gap-2">
+                    <button onclick="saveToFirebase()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold shadow transition text-sm">
                         Lưu hồ sơ
+                    </button>
+                    <button onclick="resetForm()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold shadow transition text-sm flex items-center justify-center gap-1" title="Tạo báo cáo mới (Làm sạch form)">
+                        🔄 Tạo mới
                     </button>
                 </div>
             </div>
@@ -411,7 +414,7 @@
     <!-- Firebase SDKs & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBBSSrwEkRpXn9qkBdBcxXa5LIODCo3v34",
@@ -441,6 +444,47 @@
                 tabCreate.className = "flex-1 py-2 text-center font-bold text-sm text-gray-500 border-b-2 border-transparent transition";
                 contentList.classList.remove('hidden');
                 contentCreate.classList.add('hidden');
+            }
+        };
+
+        // Hàm làm mới form tạo báo cáo mới
+        window.resetForm = function() {
+            if(confirm("Bạn có chắc chắn muốn làm mới để tạo báo cáo mới không? Mọi thông tin chưa lưu sẽ bị xóa.")) {
+                const inputs = document.querySelectorAll('input[type="text"], input[type="date"], textarea, select');
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.classList.remove('input-error');
+                });
+
+                allCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.dispatchEvent(new Event('change'));
+                });
+
+                // Reset bản preview PDF
+                updatePreview('fltNo', '');
+                updatePreview('route', '');
+                updatePreview('etd', '');
+                updatePreview('eta', '');
+                updatePreview('ac', '');
+                updatePreview('config', '');
+                updatePreview('booked', '');
+                updatePreview('ob', '');
+                updatePreview('date', '');
+                updatePreview('otherReason', '');
+                document.getElementById('p-r1').innerText = '';
+                document.getElementById('p-r2').innerText = '';
+                document.getElementById('p-r3').innerText = '';
+                updatePreview('guestNo', '');
+                updatePreview('totalCost', '');
+                updatePreview('series', '');
+                updatePreview('vouchers', '');
+
+                for(let i=1; i<=8; i++) {
+                    updatePreview('doc' + i, '');
+                }
+
+                document.getElementById('p-signDate').innerText = 'Tp. HCM, ngày...tháng...năm...';
             }
         };
 
@@ -567,9 +611,7 @@
                 document.getElementById('cb10_2').dispatchEvent(new Event('change'));
             }
 
-            // Xử lý loại bỏ chữ VN để chỉ lấy số khi đưa vào preview PDF
-            let cleanFltNo = (data.fltNo || '').replace(/^VN/i, '').trim();
-            updatePreview('fltNo', cleanFltNo);
+            updatePreview('fltNo', data.fltNo || '');
 
             document.getElementById('route').dispatchEvent(new Event('input'));
             document.getElementById('etd').dispatchEvent(new Event('input'));
@@ -725,8 +767,25 @@
             if(document.getElementById('cb10_2')) formData['cb10_2'] = document.getElementById('cb10_2').checked;
 
             try {
-                await addDoc(collection(db, "hoso_cungung"), formData);
-                alert("Đã lưu hồ sơ thành công!\nTên hồ sơ: " + recordName);
+                let q = query(collection(db, "hoso_cungung"), where("recordName", "==", recordName));
+                let querySnapshot = await getDocs(q);
+
+                if(!querySnapshot.empty) {
+                    let existingDocId = null;
+                    querySnapshot.forEach((docSnap) => { existingDocId = docSnap.id; });
+
+                    let overwrite = confirm(`Hồ sơ "${recordName}" đã tồn tại.\nBạn có muốn GHI ĐÈ lên hồ sơ cũ không?\n(Bấm Cancel nếu muốn tạo hồ sơ mới tách biệt)`);
+                    if(overwrite) {
+                        await setDoc(doc(db, "hoso_cungung", existingDocId), formData);
+                        alert("Đã ghi đè hồ sơ thành công!");
+                    } else {
+                        await addDoc(collection(db, "hoso_cungung"), formData);
+                        alert("Đã tạo mới hồ sơ thành công!");
+                    }
+                } else {
+                    await addDoc(collection(db, "hoso_cungung"), formData);
+                    alert("Đã lưu hồ sơ thành công!\nTên hồ sơ: " + recordName);
+                }
                 loadAllRecords();
             } catch (e) {
                 console.error("Lỗi khi lưu: ", e);
@@ -963,7 +1022,7 @@
             "VN595": { route: "HKG-SGN", time: "20:25", ac: "32C" },
             "VN812": { route: "SAI-SGN", time: "20:40", ac: "32N" },
             "VN7025": { route: "HPH-SGN", time: "20:45", ac: "32A" },
-            "VN1415": {route: "BMV-SGN", time: "21:05", ac: "32F" },
+            "VN1415": { route: "BMV-SGN", time: "21:05", ac: "32F" },
             "VN219": { route: "HAN-SGN", time: "21:10", ac: "78B" },
             "VN606": { route: "BKK-SGN", time: "21:15", ac: "32E" },
             "VN403": { route: "ICN-SGN", time: "21:20", ac: "32A" },
@@ -996,7 +1055,6 @@
         function updatePreview(id, value) {
             const el = document.getElementById('p-' + id);
             if (el) {
-                // Nếu là số hiệu chuyến bay, tự động cắt bỏ chữ VN để tránh bị lặp với chữ VN in sẵn trên biểu mẫu
                 if(id === 'fltNo') {
                     value = value.replace(/^VN/i, '').trim();
                 }
